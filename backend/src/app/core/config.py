@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     embedding_provider: str = "openai"
     embedding_model: str = "text-embedding-3-small"
     llm_provider: str = "openai"
-    llm_model: str = "gpt-4o"
+    llm_model: str = "gpt-4o-mini"
     openai_api_key: Optional[str] = None
 
     # VECTOR DATABASE CONFIG
