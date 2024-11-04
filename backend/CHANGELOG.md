@@ -7,8 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Added support for queries without source data in vector database
+- Graceful failure of triple export when no chunks are found
+- Tested Qdrant vector database service
+
 ### Changed
 
+- Separated embedding service from LLM service
+
+## [v0.1.5] - 2024-10-29
+
+### Changed
+
+- Updating backend to work with new UI
+- Tweaked query output for separating answers and chunks
 - Support for [Qdrant](https://qdrant.tech/) vector database.
 - Updated Milvus reference in the factory to be more robust to other Milvus datastores
 

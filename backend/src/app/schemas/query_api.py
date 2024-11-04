@@ -2,7 +2,7 @@
 
 from typing import Any, List, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.models.query_core import Chunk, FormatType, Rule
 
@@ -23,10 +23,7 @@ class QueryRequestSchema(BaseModel):
     document_id: str
     prompt: QueryPromptSchema
 
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class VectorResponseSchema(BaseModel):
@@ -53,6 +50,23 @@ class QueryResponseSchema(BaseModel):
     answer: Optional[Any] = None
     chunks: List[Chunk]
     type: str
+
+
+class QueryAnswer(BaseModel):
+    """Query answer model."""
+
+    id: str
+    document_id: str
+    prompt_id: str
+    answer: Optional[Union[int, str, bool, List[int], List[str]]]
+    type: str
+
+
+class QueryAnswerResponse(BaseModel):
+    """Query answer response model."""
+
+    answer: QueryAnswer
+    chunks: List[Chunk]
 
 
 # Type for search responses (used in service layer)

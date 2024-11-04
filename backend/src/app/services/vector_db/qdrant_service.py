@@ -13,7 +13,8 @@ from qdrant_client import QdrantClient, models
 from app.core.config import Settings
 from app.models.query_core import Chunk, Rule
 from app.schemas.query_api import VectorResponseSchema
-from app.services.llm_service import LLMService
+from app.services.embedding.base import EmbeddingService
+from app.services.llm_service import CompletionService
 from app.services.vector_db.base import VectorDBService
 
 load_dotenv()
@@ -35,9 +36,15 @@ class QdrantMetadata(BaseModel, extra="forbid"):
 class QdrantService(VectorDBService):
     """Vector service implementation using Qdrant."""
 
-    def __init__(self, llm_service: LLMService, settings: Settings):
+    def __init__(
+        self,
+        embedding_service: EmbeddingService,
+        llm_service: CompletionService,
+        settings: Settings,
+    ):
         self.settings = settings
         self.llm_service = llm_service
+        self.embedding_service = embedding_service
         self.collection_name = settings.index_name
         self.dimensions = settings.dimensions
         qdrant_config = settings.qdrant.model_dump(exclude_none=True)
@@ -68,7 +75,7 @@ class QdrantService(VectorDBService):
 
         for query in queries:
             logger.info("Generating embedding.")
-            embedded_query = await self.get_embeddings(query)
+            embedded_query = await self.get_single_embedding(query)
             logger.info("Searching...")
 
             query_response = self.client.query_points(
@@ -155,7 +162,7 @@ class QdrantService(VectorDBService):
                 reverse=True,
             )
 
-        embedded_query = await self.get_embeddings(query)
+        embedded_query = await self.get_single_embedding(query)
         logger.info("Running semantic similarity search.")
 
         semantic_response = self.client.query_points(
@@ -186,8 +193,6 @@ class QdrantService(VectorDBService):
         combined_sorted_chunks = sorted(
             combined_chunks, key=lambda chunk: chunk["chunk_number"]
         )
-
-        # Optionally, for each chunk, retrieve neighbouring chunks to ensure full context is retrieved
 
         # Eliminate duplicate chunks
         seen_chunks = set()

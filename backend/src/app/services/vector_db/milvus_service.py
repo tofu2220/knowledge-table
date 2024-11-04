@@ -11,7 +11,8 @@ from pymilvus import DataType, MilvusClient
 from app.core.config import Settings
 from app.models.query_core import Chunk, Rule
 from app.schemas.query_api import VectorResponseSchema
-from app.services.llm_service import LLMService
+from app.services.embedding.base import EmbeddingService
+from app.services.llm_service import CompletionService
 from app.services.vector_db.base import VectorDBService
 
 logging.basicConfig(level=logging.INFO)
@@ -31,8 +32,14 @@ class MilvusMetadata(BaseModel, extra="forbid"):
 class MilvusService(VectorDBService):
     """The Milvus service for the vector database."""
 
-    def __init__(self, llm_service: LLMService, settings: Settings):
+    def __init__(
+        self,
+        embedding_service: EmbeddingService,
+        llm_service: CompletionService,
+        settings: Settings,
+    ):
         """Initialize the Milvus service."""
+        self.embedding_service = embedding_service
         self.llm_service = llm_service
         self.settings = settings
         self.client = MilvusClient(
@@ -148,9 +155,8 @@ class MilvusService(VectorDBService):
         # Search for each query
         for query in queries:
             logger.info("Generating embedding.")
-
-            # Embed the query
-            embedded_query = await self.get_embeddings(query)
+            # Use get_single_embedding but wrap result in list for Milvus
+            embedded_query = [await self.get_single_embedding(query)]
 
             logger.info("Searching...")
 
@@ -316,7 +322,7 @@ class MilvusService(VectorDBService):
             )
 
         # Embed the query
-        embedded_query = await self.get_embeddings(query)
+        embedded_query = [await self.get_single_embedding(query)]
 
         try:
             # First, let's check if there are any vectors for this document_id
